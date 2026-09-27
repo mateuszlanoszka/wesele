@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Monika & Mateusz – Wesele</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="theme-color" content="#fdfbf7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0c1524" media="(prefers-color-scheme: dark)">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Nasze Wesele">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <!-- Motyw ustawiany PRZED renderem (bez mignięcia jasnego tła) -->
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+            } catch (e) {}
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+    <!-- display=block: zamiast napisu "photo_camera" do czasu załadowania ikon jest puste miejsce -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined&display=block" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-main: #fdfbf7;
+            --text-main: #0a1f44;
+            --text-muted: #5a6b8c;
+            --accent-primary: #164081;
+            --accent-secondary: #b8952a;
+            --glass-bg: linear-gradient(135deg, rgba(255, 253, 245, 0.95), rgba(255, 255, 255, 0.9));
+            --glass-border: rgba(22, 64, 129, 0.10);
+            /* Własne zdjęcia w /assets. Jeśli pliku brak – zostaje sam gradient. */
+            --hero-bg: url('assets/hero-dzien.jpg'), linear-gradient(135deg, #fff4c8 0%, #fdfbf7 45%, #e6efd3 100%);
+            --btn-text: #ffffff;
+            --nav-bg: rgba(255, 255, 255, 0.94);
+            --card-bg: rgba(255, 255, 255, 0.75);
+            --danger: #b8453d;
+            --ok: #3d7a4a;
+        }
+
+        [data-theme="dark"] {
+            --bg-main: #0c1524;
+            --text-main: #e2e6eb;
+            --text-muted: #8b9bb4;
+            --accent-primary: #c5a67c;
+            --accent-secondary: #b39668;
+            --glass-bg: linear-gradient(135deg, rgba(12, 21, 36, 0.78), rgba(18, 30, 48, 0.70));
+            --glass-border: rgba(197, 166, 124, 0.18);
+            --hero-bg: url('assets/hero-noc.jpg'), linear-gradient(160deg, #1d2d4a 0%, #0c1524 60%, #3a2c1a 100%);
+            --btn-text: #0c1524;
+            --nav-bg: rgba(12, 21, 36, 0.90);
+            --card-bg: rgba(18, 30, 48, 0.55);
+            --danger: #e0786f;
+            --ok: #7fbf8a;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; }
+        /* Gdy czcionka ikon się nie wczyta, nazwa ikony nie rozlewa się po ekranie */
+        .material-icons-outlined { display: inline-block; width: 1em; height: 1em; line-height: 1; overflow: hidden; white-space: nowrap; flex-shrink: 0; }
+        html { background: var(--bg-main); }
+        body { margin: 0; font-family: 'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif; background: var(--bg-main); color: var(--text-main); padding-bottom: calc(90px + env(safe-area-inset-bottom)); transition: background-color 0.6s ease, color 0.6s ease; }
+        h2, h3, h4 { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; margin-top: 0; }
+
+        .hero-section {
+            background-image: var(--hero-bg); background-size: cover; background-position: center;
+            padding: calc(50px + env(safe-area-inset-top)) 20px 40px;
+            display: flex; justify-content: center; border-bottom: 1px solid rgba(0,0,0,0.05); position: relative;
+        }
+        [data-theme="dark"] .hero-section::before { content: ''; position: absolute; inset: 0; background: rgba(12, 21, 36, 0.45); z-index: 1; }
+
+        .theme-toggle { position: absolute; top: calc(15px + env(safe-area-inset-top)); right: 15px; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(255,255,255,0.15); color: white; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 10; display: flex; align-items: center; justify-content: center; }
+
+        .glass-card { background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 20px; padding: 30px 20px; text-align: center; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12); border: 1px solid var(--glass-border); z-index: 2; }
+        .glass-card .subtitle { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent-secondary); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; }
+        .glass-card .subtitle::before, .glass-card .subtitle::after { content: ''; width: 25px; height: 1px; background-color: var(--accent-secondary); }
+        .glass-card h2 { font-size: 28px; font-style: italic; color: var(--accent-primary); margin-bottom: 15px; }
+        .glass-card p { font-size: 13px; margin: 0; opacity: 0.85; line-height: 1.5; min-height: 40px; font-style: italic; transition: opacity 0.3s ease; }
+        .glass-card .date { margin-top: 15px; font-weight: 600; color: var(--accent-primary); }
+
+        .tab-content { display: none; padding: 30px 20px; max-width: 600px; margin: 0 auto; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @media (prefers-reduced-motion: reduce) { .tab-content.active { animation: none; } * { transition: none !important; } }
+
+        .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent-secondary); display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .section-title::before { content: ''; width: 20px; height: 1px; background-color: var(--accent-secondary); }
+        .tab-content h3 { font-size: 24px; color: var(--accent-primary); margin-bottom: 20px; }
+        .tab-content h4 { color: var(--accent-secondary); margin: 24px 0 10px; }
+        .lead { font-size: 13px; color: var(--text-muted); line-height: 1.55; margin: -8px 0 20px; }
+
+        .dynamic-card { background: var(--card-bg); border-radius: 14px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--glass-border); }
+        .dynamic-card .time { font-weight: 600; color: var(--accent-secondary); font-size: 13px; margin-bottom: 4px; }
+        .dynamic-card .title { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+        .dynamic-card .desc { font-size: 13px; opacity: 0.85; line-height: 1.5; }
+
+        /* Alergeny */
+        .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .chip { font-size: 11px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--glass-border); color: var(--text-muted); background: rgba(127,127,127,0.06); }
+        .chip.vege { color: var(--ok); border-color: currentColor; }
+        .note { font-size: 12px; color: var(--text-muted); line-height: 1.5; padding: 12px 14px; border-left: 3px solid var(--accent-secondary); background: var(--card-bg); border-radius: 0 10px 10px 0; margin: 16px 0; }
+
+        /* 16px w polach = iOS nie przybliża ekranu przy wpisywaniu */
+        input[type="text"], input[type="search"] { width: 100%; padding: 14px; margin-bottom: 15px; background: rgba(255, 255, 255, 0.55); color: var(--text-main); border: 1px solid rgba(150, 150, 150, 0.35); border-radius: 12px; font-family: inherit; font-size: 16px; box-sizing: border-box; transition: border-color 0.3s, background 0.3s; -webkit-appearance: none; appearance: none; }
+        [data-theme="dark"] input[type="text"], [data-theme="dark"] input[type="search"] { background: rgba(0, 0, 0, 0.22); border-color: rgba(197, 166, 124, 0.25); }
+        input:focus { outline: none; border-color: var(--accent-primary); }
+        :focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+
+        .required-label { font-size: 11px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; display: block; text-transform: uppercase; }
+
+        .photo-actions { display: flex; gap: 12px; margin-bottom: 10px; }
+        .photo-actions button { flex: 1; padding: 15px; background: transparent; border: 1px solid var(--accent-primary); color: var(--accent-primary); border-radius: 14px; display: flex; flex-direction: column; align-items: center; gap: 5px; font-weight: 600; font-family: inherit; font-size: 13px; cursor: pointer; transition: transform 0.2s; }
+        .photo-actions button:active { transform: scale(0.96); }
+
+        .selected-file-name { color: var(--accent-primary); font-size: 12px; font-weight: 600; text-align: center; margin-bottom: 20px; min-height: 15px; }
+
+        button.primary-btn { width: 100%; padding: 16px; background: var(--accent-primary); color: var(--btn-text); border: none; border-radius: 14px; font-weight: 600; font-size: 16px; font-family: inherit; cursor: pointer; transition: transform 0.2s; }
+        button.primary-btn:active { transform: scale(0.97); }
+        button:disabled { opacity: 0.6; pointer-events: none; }
+
+        .checkbox-container { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; cursor: pointer; font-size: 14px; }
+        .checkbox-container input { width: 20px; height: 20px; accent-color: var(--accent-primary); }
+        .disco-warning { display: none; background: rgba(201, 92, 84, 0.1); border: 1px solid #c95c54; padding: 15px; border-radius: 12px; margin-bottom: 15px; font-size: 13px; line-height: 1.5; }
+        .disco-warning span { display: block; font-weight: bold; color: #c95c54; margin-bottom: 5px; font-size: 14px; }
+
+        /* Nawigacja – 6 zakładek */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--nav-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); display: flex; justify-content: space-around; padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid var(--glass-border); z-index: 100; }
+        .nav-item { flex: 1; min-width: 0; background: none; border: none; font-family: inherit; text-align: center; color: var(--text-muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 600; padding: 4px 0; }
+        .nav-item i { font-size: 24px; margin-bottom: 3px; transition: transform 0.2s; }
+        .nav-item.active { color: var(--accent-primary); }
+        .nav-item.active i { transform: scale(1.1); }
+
+        /* Galeria */
+        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 40px; }
+        .gallery-item { border-radius: 14px; overflow: hidden; position: relative; aspect-ratio: 3/4; box-shadow: 0 4px 15px rgba(0,0,0,0.08); background: rgba(127,127,127,0.1); cursor: pointer; }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .gallery-item .overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 25px 12px 10px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; font-size: 11px; display: flex; flex-direction: column; align-items: flex-start; pointer-events: none; word-break: break-word; }
+        .delete-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; width: 36px; height: 36px; display: flex; justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(8px); z-index: 10; }
+        .delete-btn:active { background: rgba(220, 53, 69, 0.9); }
+        .gallery-empty { grid-column: 1/-1; text-align: center; font-size: 13px; opacity: 0.75; line-height: 1.5; }
+
+        /* Stolik */
+        .table-result { display: flex; gap: 14px; align-items: center; }
+        .table-badge { flex: 0 0 auto; min-width: 64px; height: 64px; padding: 0 8px; box-sizing: border-box; border-radius: 50%; border: 1px solid var(--accent-secondary); display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', Georgia, serif; font-style: italic; color: var(--accent-primary); font-size: 13px; text-align: center; line-height: 1.1; }
+        .info-card { display: flex; gap: 14px; align-items: flex-start; }
+        .info-card i { color: var(--accent-secondary); font-size: 24px; flex: 0 0 auto; }
+        .info-card a { color: var(--accent-primary); font-weight: 600; text-decoration: none; font-size: 13px; display: inline-block; margin-top: 6px; }
+        .install-btn { display: none; margin-top: 8px; }
+
+        /* Komunikaty */
+        .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); max-width: calc(100% - 40px); width: max-content; box-sizing: border-box; background: var(--text-main); color: var(--bg-main); padding: 12px 18px; border-radius: 12px; font-size: 13px; line-height: 1.4; z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.25s, transform 0.25s; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+        .toast.show { opacity: 1; transform: translate(-50%, 0); }
+        .toast.error { background: var(--danger); color: #fff; }
+        .queue-pill { position: fixed; left: 50%; transform: translateX(-50%); top: calc(10px + env(safe-area-inset-top)); background: var(--nav-bg); border: 1px solid var(--glass-border); color: var(--text-main); font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: 999px; z-index: 200; display: none; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 4px 14px rgba(0,0,0,0.12); }
+    </style>
+</head>
+<body>
+
+    <div id="queue-pill" class="queue-pill" role="status" aria-live="polite"></div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <div class="hero-section">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Zmień tryb jasny/ciemny">
+            <i class="material-icons-outlined" id="theme-icon">dark_mode</i>
+        </button>
+        <div class="glass-card">
+            <div class="subtitle">NASZE WESELE</div>
+            <h2>Monika & Mateusz</h2>
+            <p id="dynamic-subtitle">Uchwyć z nami najpiękniejsze chwile i udostępnij na żywo.</p>
+            <div class="date">26 czerwca 2027 · 17:00</div>
+        </div>
+    </div>
+
+    <main>
+        <!-- KADRY -->
+        <section id="kadry" class="tab-content active">
+            <div class="section-title">GALERIA</div>
+            <h3>Wasze kadry</h3>
+
+            <div class="photo-actions">
+                <button type="button" id="btn-camera">
+                    <i class="material-icons-outlined">photo_camera</i> Zrób zdjęcie
+                </button>
+                <button type="button" id="btn-gallery">
+                    <i class="material-icons-outlined">collections</i> Z galerii
+                </button>
+            </div>
+
+            <div id="file-name-display" class="selected-file-name"></div>
+
+            <!-- Tylko zdjęcia – filmy nie przechodzą przez kompresję canvas -->
+            <input type="file" id="camera-input" accept="image/*" capture="environment" hidden>
+            <input type="file" id="gallery-input" accept="image/*" multiple hidden>
+
+            <label class="required-label" for="photo-author">KTO DODAJE ZDJĘCIE?</label>
+            <input type="text" id="photo-author" class="guest-name" placeholder="Twoje imię i nazwisko" maxlength="60" autocomplete="name">
+
+            <label class="required-label" for="photo-caption">PODPIS ZDJĘCIA</label>
+            <input type="text" id="photo-caption" placeholder="Krótki podpis (opcjonalnie)" maxlength="140">
+
+            <button class="primary-btn" id="photo-submit">Wyślij na ścianę</button>
+
+            <div id="gallery-grid" class="gallery-grid"></div>
+        </section>
+
+        <!-- PLAN DNIA -->
+        <section id="plan" class="tab-content">
+            <div class="section-title">HARMONOGRAM</div>
+            <h3>Plan dnia</h3>
+            <div id="plan-container"></div>
+        </section>
+
+        <!-- MENU -->
+        <section id="menu" class="tab-content">
+            <div class="section-title">KARTA DAŃ</div>
+            <h3>Menu weselne</h3>
+            <div id="menu-container"></div>
+            <div class="note">Masz alergię lub dietę, której nie ma w oznaczeniach? Powiedz kelnerowi – kuchnia przygotuje wersję dla Ciebie.</div>
+        </section>
+
+        <!-- BAR -->
+        <section id="bar" class="tab-content">
+            <div class="section-title">BAR</div>
+            <h3>Drinki & Fiszki</h3>
+            <div id="bar-container"></div>
+            <h3 style="margin-top: 30px;">Włoskie Fiszki</h3>
+            <div id="flashcards-container"></div>
+        </section>
+
+        <!-- PIOSENKI -->
+        <section id="piosenki" class="tab-content">
+            <div class="section-title">MUZYKA</div>
+            <h3>Zaproponuj piosenkę</h3>
+
+            <label class="required-label" for="song-author">KTO ZAMAWIA?</label>
+            <input type="text" id="song-author" class="guest-name" placeholder="Twoje imię" maxlength="60" autocomplete="name">
+
+            <label class="required-label" for="song-title">ZAMAWIANA PIOSENKA</label>
+            <input type="text" id="song-title" placeholder="Wykonawca i tytuł utworu" maxlength="120">
+
+            <label class="required-label" for="song-dedication">DEDYKACJA</label>
+            <input type="text" id="song-dedication" placeholder="Wpisz swoją dedykację (opcjonalnie)" maxlength="140">
+
+            <label class="checkbox-container">
+                <input type="checkbox" id="disco-toggle">
+                To piosenka z gatunku Disco Polo
+            </label>
+
+            <div class="disco-warning" id="disco-warning">
+                <span>⚠️ BLIK na Schronisko!</span>
+                Księgowość weselna jest bezlitosna. Jeśli chcesz usłyszeć ten utwór, wpłać dowolny datek na <strong>Schronisko w Poznaniu</strong>. Pokaż potwierdzenie DJ-owi, a zagra wszystko! 🐶
+            </div>
+
+            <button class="primary-btn" id="song-submit">Wyślij do DJ-a</button>
+        </section>
+
+        <!-- INFO -->
+        <section id="info" class="tab-content">
+            <div class="section-title">DLA GOŚCI</div>
+            <h3>Znajdź swój stolik</h3>
+            <p class="lead">Wpisz imię lub nazwisko – pokażemy, przy którym stole siedzisz i z kim.</p>
+            <input type="search" id="table-search" placeholder="np. Kowalska" autocomplete="off" enterkeyhint="search">
+            <div id="table-results"></div>
+
+            <h3 style="margin-top: 30px;">Informacje praktyczne</h3>
+            <div id="info-container"></div>
+
+            <div class="dynamic-card info-card" id="install-card">
+                <i class="material-icons-outlined">install_mobile</i>
+                <div>
+                    <div class="title">Dodaj aplikację do ekranu</div>
+                    <div class="desc" id="install-desc">Android: menu przeglądarki → „Zainstaluj aplikację”. iPhone: Safari → Udostępnij → „Do ekranu początkowego”.</div>
+                    <button class="primary-btn install-btn" id="install-btn">Zainstaluj</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Zakładki">
+        <button class="nav-item active" data-tab="kadry"><i class="material-icons-outlined">photo_camera</i><span>Kadry</span></button>
+        <button class="nav-item" data-tab="plan"><i class="material-icons-outlined">schedule</i><span>Plan</span></button>
+        <button class="nav-item" data-tab="menu"><i class="material-icons-outlined">restaurant_menu</i><span>Menu</span></button>
+        <button class="nav-item" data-tab="bar"><i class="material-icons-outlined">local_bar</i><span>Bar</span></button>
+        <button class="nav-item" data-tab="piosenki"><i class="material-icons-outlined">music_note</i><span>Piosenki</span></button>
+        <button class="nav-item" data-tab="info"><i class="material-icons-outlined">event_seat</i><span>Info</span></button>
+    </nav>
+
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyESSUKYd9STpSMnTcfcYUcjyviUc0HCICrOiRIWoy1hJCd-z2YtZhUPJ-xYL2ZwSM3ng/exec';
+        const DELETE_WINDOW_MS = 10 * 60 * 1000;
+
+        /* ============================================================
+           DANE WESELA – edytuj tutaj. Po zmianie podbij VERSION w sw.js!
+           ============================================================ */
+        const weddingData = {
+            planDnia: [
+                { Godzina: "17:00", Tytuł: "Ceremonia", Opis: "Ceremonia zaślubin" },
+                { Godzina: "17:30", Tytuł: "Aperitivo", Opis: "Zapraszamy na taras" },
+                { Godzina: "19:00", Tytuł: "Kolacja", Opis: "Kolacja podana przy stole" },
+                { Godzina: "20:30", Tytuł: "Pierwszy taniec", Opis: "Rozpoczynamy zabawę na parkiecie" },
+                { Godzina: "22:30", Tytuł: "Tort weselny", Opis: "Słodka niespodzianka dla gości" }
+            ],
+            // Alergeny: DO POTWIERDZENIA Z KUCHNIĄ (14 alergenów UE)
+            kartaDan: [
+                { Kategoria: "Przystawki", Nazwa: "Arancini di Riso", Skład: "Sycylijskie kulki ryżowe z ragù i groszkiem", Alergeny: ["gluten", "jaja", "mleko", "seler"], Wege: false },
+                { Kategoria: "Przystawki", Nazwa: "Caponata Siciliana", Skład: "Bakłażan z selerem, kaparami i oliwkami", Alergeny: ["seler"], Wege: true },
+                { Kategoria: "Danie Główne", Nazwa: "Pasta alla Norma", Skład: "Makaron z bakłażanem, sosem pomidorowym i słoną ricottą", Alergeny: ["gluten", "mleko"], Wege: true },
+                { Kategoria: "Danie Główne", Nazwa: "Pollo al Limone", Skład: "Pierś z kurczaka w sosie cytrynowym z rozmarynem", Alergeny: ["mleko"], Wege: false },
+                { Kategoria: "Desery", Nazwa: "Cannoli Siciliani", Skład: "Chrupiące rurki z kremem ze słodkiej ricotty", Alergeny: ["gluten", "jaja", "mleko"], Wege: true }
+            ],
+            drinki: [
+                { Kategoria: "Aperitivo", Nazwa: "Aperol Spritz", Składniki: "Aperol, Prosecco, woda gazowana, pomarańcza" },
+                { Kategoria: "Aperitivo", Nazwa: "Limoncello Spritz", Składniki: "Limoncello, Prosecco, woda gazowana, cytryna" },
+                { Kategoria: "Koktajle", Nazwa: "Espresso Martini", Składniki: "Wódka, likier kawowy, espresso, syrop cukrowy" },
+                { Kategoria: "Koktajle", Nazwa: "Negroni", Składniki: "Gin, słodki wermut, Campari" },
+                { Kategoria: "Bez alkoholu", Nazwa: "Virgin Mojito", Składniki: "Limonka, mięta, cukier trzcinowy, woda gazowana" }
+            ],
+            fiszki: [
+                { Włoski: "Cin cin!", Polski: "Na zdrowie! (toast)" },
+                { Włoski: "Per favore", Polski: "Proszę" },
+                { Włoski: "Grazie mille", Polski: "Bardzo dziękuję" },
+                { Włoski: "Andiamo a ballare!", Polski: "Chodźmy tańczyć!" },
+                { Włoski: "Un altro, per favore", Polski: "Jeszcze jedno, proszę" }
+            ],
+            // Stoły nazwane od sycylijskich miast. PRZYKŁADOWE nazwiska – podmień na listę gości.
+            stoly: [
+                { Stół: "Palermo", Goście: ["Monika", "Mateusz", "Świadkowa Anna Nowak", "Świadek Piotr Wiśniewski"] },
+                { Stół: "Catania", Goście: ["Anna Kowalska", "Jan Kowalski", "Maria Zielińska", "Tomasz Zieliński"] },
+                { Stół: "Siracusa", Goście: ["Katarzyna Wójcik", "Łukasz Wójcik", "Agnieszka Kamińska", "Michał Kamiński"] }
+            ],
+            // Ikony: nazwy z Material Icons (fonts.google.com/icons). Link: https:// lub tel:
+            informacje: [
+                { Ikona: "place", Tytuł: "Miejsce przyjęcia", Opis: "[UZUPEŁNIJ nazwę sali i adres]", Link: "https://maps.google.com/?q=[UZUPEŁNIJ]", LinkTekst: "Nawiguj" },
+                { Ikona: "local_parking", Tytuł: "Parking", Opis: "[UZUPEŁNIJ – gdzie parkować, czy bezpłatny]" },
+                { Ikona: "hotel", Tytuł: "Nocleg", Opis: "[UZUPEŁNIJ – hotel, godzina check-in, śniadanie]" },
+                { Ikona: "local_taxi", Tytuł: "Taxi", Opis: "[UZUPEŁNIJ – lokalna korporacja]", Link: "tel:+48000000000", LinkTekst: "Zadzwoń" },
+                { Ikona: "checkroom", Tytuł: "Dress code", Opis: "[UZUPEŁNIJ – np. elegancko, letnio]" }
+            ]
+        };
+
+        const subtitles = {
+            kadry: 'Uchwyć z nami najpiękniejsze chwile i udostępnij na żywo.',
+            plan: 'La dolce vita nie lubi pośpiechu, ale harmonogram warto znać.',
+            menu: 'Prawdziwa sycylijska uczta. Zostawcie miejsce na deser!',
+            bar: 'Cin cin! Czas na przerwę od parkietu. Co barman ma nalać?',
+            piosenki: 'Felicità to parkiet pełen gości. Jaki utwór wyciągnie Cię do tańca?',
+            info: 'Wszystko, czego potrzebujesz, żeby dotrzeć i znaleźć swoje miejsce.'
+        };
+
+        /* ================= NARZĘDZIA ================= */
+        const $ = id => document.getElementById(id);
+
+        const LS = {
+            get(key, fallback) { try { const v = localStorage.getItem(key); return v === null ? fallback : JSON.parse(v); } catch (e) { return fallback; } },
+            set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} }
+        };
+
+        // Ochrona przed XSS – każda wartość od gości przechodzi przez esc()
+        function esc(s) {
+            return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+        function safeLink(url) {
+            const u = String(url || '');
+            return /^(https:\/\/|tel:)/i.test(u) ? u : '';
+        }
+        function uuid() {
+            if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+            return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+        }
+        function normalize(s) {
+            return String(s || '').toLowerCase().replace(/ł/g, 'l').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+        }
+
+        let toastTimer = null;
+        function toast(msg, isError = false, ms = 3500) {
+            const el = $('toast');
+            el.textContent = msg;
+            el.classList.toggle('error', isError);
+            el.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+        }
+
+        class NetworkError extends Error {}
+
+        async function api(action, payload = {}, timeoutMs = 45000) {
+            const ctrl = new AbortController();
+            const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+            let response;
+            try {
+                response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action, payload }),
+                    signal: ctrl.signal
+                });
+            } catch (e) {
+                throw new NetworkError(e.name === 'AbortError' ? 'Przekroczono czas połączenia' : 'Brak połączenia');
+            } finally {
+                clearTimeout(timer);
+            }
+            if (!response.ok) throw new NetworkError('HTTP ' + response.status);
+            try { return await response.json(); }
+            catch (e) { throw new NetworkError('Niepoprawna odpowiedź serwera'); }
+        }
+
+        /* ================= KOLEJKA OFFLINE (IndexedDB) ================= */
+        const Outbox = {
+            db: null,
+            open() {
+                if (this.db) return Promise.resolve(this.db);
+                return new Promise((resolve, reject) => {
+                    const req = indexedDB.open('weseleOutbox', 1);
+                    req.onupgradeneeded = () => req.result.createObjectStore('items', { keyPath: 'id', autoIncrement: true });
+                    req.onsuccess = () => { this.db = req.result; resolve(this.db); };
+                    req.onerror = () => reject(req.error);
+                });
+            },
+            async run(mode, fn) {
+                const db = await this.open();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction('items', mode);
+                    const req = fn(tx.objectStore('items'));
+                    tx.oncomplete = () => resolve(req ? req.result : undefined);
+                    tx.onerror = () => reject(tx.error);
+                });
+            },
+            add(action, payload) { return this.run('readwrite', s => s.add({ action, payload, queuedAt: Date.now() })); },
+            all() { return this.run('readonly', s => s.getAll()); },
+            remove(id) { return this.run('readwrite', s => s.delete(id)); }
+        };
+
+        async function refreshQueuePill() {
+            try {
+                const items = await Outbox.all();
+                const pill = $('queue-pill');
+                if (!items.length) { pill.style.display = 'none'; return; }
+                const photos = items.filter(i => i.action === 'uploadPhoto').length;
+                const songs = items.length - photos;
+                const parts = [];
+                if (photos) parts.push(`${photos} zdj.`);
+                if (songs) parts.push(`${songs} piosenk${songs === 1 ? 'a' : 'i'}`);
+                pill.textContent = `⏳ Czeka na zasięg: ${parts.join(', ')}`;
+                pill.style.display = 'block';
+            } catch (e) {}
+        }
+
+        let flushing = false;
+        async function flushOutbox() {
+            if (flushing || !navigator.onLine) return;
+            flushing = true;
+            let sent = 0;
+            try {
+                const items = await Outbox.all();
+                for (const item of items) {
+                    try {
+                        const data = await api(item.action, item.payload);
+                        if (data.status === 'success') {
+                            if (item.action === 'uploadPhoto') rememberMyPhoto(data);
+                            sent++;
+                        }
+                        // Błąd serwera (np. walidacja) – ponawianie nic nie da, usuwamy z kolejki
+                        await Outbox.remove(item.id);
+                    } catch (e) {
+                        if (e instanceof NetworkError) break; // dalej brak zasięgu
+                    }
+                }
+            } catch (e) {} finally {
+                flushing = false;
+                refreshQueuePill();
+            }
+            if (sent) {
+                toast(`Wysłano zaległe: ${sent}`);
+                if (document.querySelector('#kadry.active')) loadGallery();
+            }
+        }
+
+        /* ================= UI: ZAKŁADKI I MOTYW ================= */
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(s => s.classList.toggle('active', s.id === tabId));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === tabId));
+
+            const subtitleEl = $('dynamic-subtitle');
+            subtitleEl.style.opacity = '0';
+            setTimeout(() => { subtitleEl.textContent = subtitles[tabId]; subtitleEl.style.opacity = '0.85'; }, 200);
+
+            if (tabId === 'kadry') loadGallery();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function applyThemeIcon() {
+            $('theme-icon').textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light_mode' : 'dark_mode';
+        }
+        function toggleTheme() {
+            const root = document.documentElement;
+            const dark = root.getAttribute('data-theme') !== 'dark';
+            if (dark) root.setAttribute('data-theme', 'dark'); else root.removeAttribute('data-theme');
+            try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}
+            applyThemeIcon();
+        }
+
+        function toggleDiscoPolo() {
+            $('disco-warning').style.display = $('disco-toggle').checked ? 'block' : 'none';
+        }
+
+        /* ================= RENDER DANYCH STATYCZNYCH ================= */
+        function groupBy(arr, key) {
+            return arr.reduce((acc, item) => { (acc[item[key]] = acc[item[key]] || []).push(item); return acc; }, {});
+        }
+
+        function renderAppData() {
+            $('plan-container').innerHTML = weddingData.planDnia.map(item => `
+                <div class="dynamic-card"><div class="time">${esc(item.Godzina)}</div><div class="title">${esc(item.Tytuł)}</div><div class="desc">${esc(item.Opis)}</div></div>
+            `).join('');
+
+            let menuHtml = '';
+            for (const [category, items] of Object.entries(groupBy(weddingData.kartaDan, 'Kategoria'))) {
+                menuHtml += `<h4>${esc(category)}</h4>`;
+                menuHtml += items.map(item => {
+                    const chips = (item.Alergeny || []).map(a => `<span class="chip">${esc(a)}</span>`).join('');
+                    const vege = item.Wege ? '<span class="chip vege">🌿 wegetariańskie</span>' : '';
+                    return `<div class="dynamic-card"><div class="title">${esc(item.Nazwa)}</div><div class="desc">${esc(item.Skład)}</div>${(chips || vege) ? `<div class="chips">${vege}${chips}</div>` : ''}</div>`;
+                }).join('');
+            }
+            $('menu-container').innerHTML = menuHtml;
+
+            let barHtml = '';
+            for (const [category, items] of Object.entries(groupBy(weddingData.drinki, 'Kategoria'))) {
+                barHtml += `<h4>${esc(category)}</h4>`;
+                barHtml += items.map(item => `<div class="dynamic-card"><div class="title">${esc(item.Nazwa)}</div><div class="desc">${esc(item.Składniki)}</div></div>`).join('');
+            }
+            $('bar-container').innerHTML = barHtml;
+
+            $('flashcards-container').innerHTML = weddingData.fiszki.map(item => `
+                <div class="dynamic-card" style="border-left: 3px solid var(--accent-secondary);">
+                    <div class="title" style="color: var(--accent-primary);">${esc(item.Włoski)}</div><div class="desc">PL: ${esc(item.Polski)}</div>
+                </div>
+            `).join('');
+
+            $('info-container').innerHTML = weddingData.informacje.map(item => {
+                const link = safeLink(item.Link);
+                return `<div class="dynamic-card info-card">
+                    <i class="material-icons-outlined" aria-hidden="true">${esc(item.Ikona)}</i>
+                    <div><div class="title">${esc(item.Tytuł)}</div><div class="desc">${esc(item.Opis)}</div>
+                    ${link ? `<a href="${esc(link)}" ${link.startsWith('https') ? 'target="_blank" rel="noopener"' : ''}>${esc(item.LinkTekst || 'Otwórz')}</a>` : ''}</div>
+                </div>`;
+            }).join('');
+        }
+
+        /* ================= ZNAJDŹ STOLIK ================= */
+        const guestIndex = weddingData.stoly.flatMap(t => t.Goście.map(name => ({ name, table: t.Stół, key: normalize(name), mates: t.Goście.filter(g => g !== name) })));
+
+        function searchTable(query) {
+            const box = $('table-results');
+            const tokens = normalize(query).split(/\s+/).filter(Boolean);
+            if (!tokens.length || tokens.join('').length < 3) { box.innerHTML = ''; return; }
+            const hits = guestIndex.filter(g => tokens.every(t => g.key.includes(t))).slice(0, 5);
+            if (!hits.length) {
+                box.innerHTML = '<div class="note">Nie znaleźliśmy takiej osoby. Spróbuj samego nazwiska albo zapytaj obsługę sali.</div>';
+                return;
+            }
+            box.innerHTML = hits.map(h => `
+                <div class="dynamic-card table-result">
+                    <div class="table-badge">${esc(h.table)}</div>
+                    <div><div class="title">${esc(h.name)}</div><div class="desc">Przy stole z: ${esc(h.mates.join(', '))}</div></div>
+                </div>`).join('');
+        }
+
+        /* ================= GALERIA ================= */
+        const galleryState = { lastRow: null, lastFileId: null, loading: false, photos: [] };
+        const THUMB_RE = /^[A-Za-z0-9+/=]+$/;
+
+        function getMyPhotos() {
+            // Czyścimy wpisy starsze niż 1 dzień
+            const list = LS.get('myWeddingPhotos', []).filter(p => p && p.id && Date.now() - p.time < 86400000);
+            LS.set('myWeddingPhotos', list);
+            return list;
+        }
+        function rememberMyPhoto(data) {
+            if (!data.fileId) return;
+            const list = getMyPhotos();
+            if (!list.some(p => p.id === data.fileId)) list.push({ id: data.fileId, token: data.deleteToken, time: Date.now() });
+            LS.set('myWeddingPhotos', list);
+        }
+
+        async function loadGallery(force = false) {
+            if (galleryState.loading) return;
+            galleryState.loading = true;
+            try {
+                const payload = force ? {} : { lastRow: galleryState.lastRow, lastFileId: galleryState.lastFileId };
+                const data = await api('getGallery', payload, 20000);
+                if (data.status !== 'success') return;
+                if (data.unchanged) { renderGalleryGrid(galleryState.photos); return; } // odśwież tylko przyciski usuwania
+                galleryState.lastRow = data.lastRow;
+                galleryState.lastFileId = data.data[0] ? data.data[0].fileId : null;
+                galleryState.photos = data.data;
+                renderGalleryGrid(data.data);
+            } catch (e) {
+                if (!galleryState.photos.length) {
+                    $('gallery-grid').innerHTML = '<p class="gallery-empty">Brak zasięgu – galeria pojawi się, gdy wróci połączenie. Zdjęcia możesz dodawać już teraz, wyślemy je automatycznie.</p>';
+                }
+            } finally {
+                galleryState.loading = false;
+            }
+        }
+
+        function renderGalleryGrid(photos) {
+            const container = $('gallery-grid');
+            if (!photos || !photos.length) {
+                container.innerHTML = '<p class="gallery-empty">Brak zdjęć. Dodaj pierwsze!</p>';
+                return;
+            }
+            const mine = getMyPhotos();
+            const now = Date.now();
+
+            container.innerHTML = photos.map(photo => {
+                const my = mine.find(p => p.id === photo.fileId);
+                const canDelete = my && my.token && (now - my.time < DELETE_WINDOW_MS);
+                const thumb = photo.thumb && THUMB_RE.test(photo.thumb)
+                    ? `data:image/jpeg;base64,${photo.thumb}`
+                    : `https://drive.google.com/thumbnail?id=${encodeURIComponent(photo.fileId)}&sz=w400`;
+                const url = /^https:\/\/(drive|docs)\.google\.com\//.test(photo.url || '') ? photo.url : '';
+                return `
+                    <div class="gallery-item" data-url="${esc(url)}" role="link" tabindex="0">
+                        <img src="${esc(thumb)}" alt="Zdjęcie od: ${esc(photo.author || 'Gość')}" loading="lazy">
+                        ${canDelete ? `<button class="delete-btn" data-delete="${esc(photo.fileId)}" aria-label="Usuń moje zdjęcie"><i class="material-icons-outlined" style="font-size: 18px;">delete</i></button>` : ''}
+                        <div class="overlay">
+                            <span style="font-weight: 600;">${esc(photo.author || 'Gość')}</span>
+                            ${photo.caption ? `<span style="opacity: 0.8; font-size: 10px; margin-top: 2px;">${esc(photo.caption)}</span>` : ''}
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        async function deleteMyPhoto(fileId, btn) {
+            const my = getMyPhotos().find(p => p.id === fileId);
+            if (!my) return;
+            if (!confirm('Czy na pewno chcesz bezpowrotnie usunąć to zdjęcie z galerii?')) return;
+            btn.disabled = true;
+            try {
+                const data = await api('deletePhoto', { fileId, deleteToken: my.token });
+                if (data.status === 'success') {
+                    LS.set('myWeddingPhotos', getMyPhotos().filter(p => p.id !== fileId));
+                    toast('Zdjęcie usunięte');
+                    loadGallery(true);
+                } else {
+                    toast('Nie udało się usunąć: ' + (data.message || 'nieznany błąd'), true);
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                toast('Brak zasięgu – spróbuj usunąć za chwilę.', true);
+                btn.disabled = false;
+            }
+        }
+
+        /* ================= UPLOAD ZDJĘĆ ================= */
+        let selectedFiles = [];
+        let busy = false;
+
+        function handleFileSelect(input) {
+            const files = Array.from(input.files || []);
+            const images = files.filter(f => f.type.startsWith('image/') || /\.(heic|heif|jpe?g|png|webp)$/i.test(f.name));
+            if (images.length < files.length) toast('Pominięto pliki, które nie są zdjęciami (filmów nie przesyłamy).', true);
+            selectedFiles = images.slice(0, 10);
+            if (images.length > 10) toast('Naraz można wysłać maksymalnie 10 zdjęć.', true);
+            const label = $('file-name-display');
+            if (!selectedFiles.length) label.textContent = '';
+            else if (selectedFiles.length === 1) label.textContent = '📸 Wybrano: ' + selectedFiles[0].name;
+            else label.textContent = `📸 Wybrano zdjęć: ${selectedFiles.length}`;
+        }
+
+        function loadImage(file) {
+            return new Promise((resolve, reject) => {
+                const url = URL.createObjectURL(file);
+                const img = new Image();
+                img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+                img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('decode')); };
+                img.src = url;
+            });
+        }
+
+        async function compressImageAndThumb(file) {
+            const img = await loadImage(file);
+
+            // Pełny obraz: dłuższy bok max 1920 px
+            const maxSide = 1920;
+            const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+            const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+            const cMain = document.createElement('canvas');
+            cMain.width = w; cMain.height = h;
+            cMain.getContext('2d').drawImage(img, 0, 0, w, h);
+            const main = cMain.toDataURL('image/jpeg', 0.8).split(',')[1];
+
+            // Miniatura 3:4 – musi się zmieścić w komórce Sheets (limit 50 000 znaków)
+            const tW = 240, tH = 320, target = tW / tH, ratio = img.width / img.height;
+            let sw = img.width, sh = img.height, sx = 0, sy = 0;
+            if (ratio > target) { sw = img.height * target; sx = (img.width - sw) / 2; }
+            else { sh = img.width / target; sy = (img.height - sh) / 2; }
+            const cThumb = document.createElement('canvas');
+            cThumb.width = tW; cThumb.height = tH;
+            cThumb.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, tW, tH);
+            let q = 0.6, thumb;
+            do {
+                thumb = cThumb.toDataURL('image/jpeg', q).split(',')[1];
+                q -= 0.1;
+            } while (thumb.length > 40000 && q > 0.15);
+            if (thumb.length > 45000) thumb = ''; // awaryjnie: miniatura z Drive
+
+            return { main, thumb };
+        }
+
+        async function handlePhotoSubmit() {
+            const author = $('photo-author').value.trim();
+            if (!author) { toast('Podaj, kto dodaje zdjęcie.', true); $('photo-author').focus(); return; }
+            if (!selectedFiles.length) { toast('Najpierw wybierz zdjęcie przyciskiem powyżej.', true); return; }
+            saveGuestName(author);
+
+            const btn = $('photo-submit');
+            const caption = $('photo-caption').value.trim();
+            const files = selectedFiles.slice();
+            busy = true; btn.disabled = true;
+
+            let sent = 0, queued = 0, failed = 0, offline = !navigator.onLine;
+            try {
+                for (let i = 0; i < files.length; i++) {
+                    const prefix = files.length > 1 ? `(${i + 1}/${files.length}) ` : '';
+                    btn.textContent = prefix + 'Przygotowywanie…';
+                    let images;
+                    try { images = await compressImageAndThumb(files[i]); }
+                    catch (e) { failed++; continue; }
+
+                    const payload = {
+                        clientId: uuid(), guestId: author, caption, fileName: files[i].name,
+                        mimeType: 'image/jpeg', base64Data: images.main, thumbnailBase64: images.thumb
+                    };
+
+                    if (offline) { await Outbox.add('uploadPhoto', payload); queued++; continue; }
+
+                    btn.textContent = prefix + 'Wysyłanie na ścianę…';
+                    try {
+                        const data = await api('uploadPhoto', payload, 90000);
+                        if (data.status === 'success') { rememberMyPhoto(data); sent++; }
+                        else { failed++; toast('Błąd serwera: ' + (data.message || ''), true, 5000); }
+                    } catch (e) {
+                        offline = true; // kolejne zdjęcia od razu do kolejki
+                        await Outbox.add('uploadPhoto', payload); queued++;
+                    }
+                }
+            } finally {
+                busy = false;
+                btn.textContent = 'Wyślij na ścianę'; btn.disabled = false;
+                $('camera-input').value = ''; $('gallery-input').value = '';
+                selectedFiles = []; $('file-name-display').textContent = '';
+                if (sent || queued) $('photo-caption').value = '';
+                refreshQueuePill();
+            }
+
+            if (queued) toast(`Brak zasięgu – ${queued} zdj. wyślemy automatycznie, gdy wróci sieć.`, false, 5000);
+            else if (failed && !sent) toast('Nie udało się odczytać zdjęcia. Spróbuj innego pliku.', true, 5000);
+            else if (sent) toast(sent === 1 ? 'Zdjęcie jest na ścianie!' : `Wysłano zdjęć: ${sent}`);
+            if (sent) loadGallery(true);
+        }
+
+        /* ================= PIOSENKI ================= */
+        async function submitSong() {
+            const author = $('song-author').value.trim();
+            const title = $('song-title').value.trim();
+            if (!author || !title) { toast('Podaj swoje imię i tytuł utworu.', true); return; }
+            saveGuestName(author);
+
+            const btn = $('song-submit');
+            const payload = {
+                clientId: uuid(), guestId: author, songTitle: title,
+                dedication: $('song-dedication').value.trim(), isDiscoPolo: $('disco-toggle').checked
+            };
+            const resetForm = () => {
+                $('song-title').value = ''; $('song-dedication').value = '';
+                $('disco-toggle').checked = false; toggleDiscoPolo();
+            };
+
+            btn.textContent = 'Wysyłanie…'; btn.disabled = true;
+            try {
+                const data = await api('addSong', payload, 30000);
+                if (data.status === 'success') { toast('Piosenka wysłana do DJ-a! 🎶'); resetForm(); }
+                else toast('Błąd serwera: ' + (data.message || ''), true);
+            } catch (e) {
+                await Outbox.add('addSong', payload);
+                refreshQueuePill();
+                toast('Brak zasięgu – piosenka poleci do DJ-a automatycznie, gdy wróci sieć.', false, 5000);
+                resetForm();
+            } finally {
+                btn.textContent = 'Wyślij do DJ-a'; btn.disabled = false;
+            }
+        }
+
+        /* ================= IMIĘ GOŚCIA ================= */
+        function saveGuestName(name) {
+            LS.set('guestName', name);
+            document.querySelectorAll('.guest-name').forEach(i => { if (!i.value.trim()) i.value = name; });
+        }
+
+        /* ================= INSTALACJA PWA ================= */
+        let installPrompt = null;
+        window.addEventListener('beforeinstallprompt', e => {
+            e.preventDefault(); installPrompt = e;
+            $('install-btn').style.display = 'block';
+            $('install-desc').textContent = 'Jedno kliknięcie i aplikacja będzie na ekranie głównym – działa też bez zasięgu.';
+        });
+
+        /* ================= START ================= */
+        window.addEventListener('DOMContentLoaded', () => {
+            applyThemeIcon();
+            renderAppData();
+
+            const name = LS.get('guestName', '');
+            if (name) document.querySelectorAll('.guest-name').forEach(i => i.value = name);
+
+            // Aplikacja już zainstalowana → ukryj kartę instalacji
+            if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) $('install-card').style.display = 'none';
+
+            document.querySelectorAll('.nav-item').forEach(n => n.addEventListener('click', () => switchTab(n.dataset.tab)));
+            $('theme-toggle').addEventListener('click', toggleTheme);
+            $('disco-toggle').addEventListener('change', toggleDiscoPolo);
+            $('btn-camera').addEventListener('click', () => $('camera-input').click());
+            $('btn-gallery').addEventListener('click', () => $('gallery-input').click());
+            $('camera-input').addEventListener('change', function () { handleFileSelect(this); });
+            $('gallery-input').addEventListener('change', function () { handleFileSelect(this); });
+            $('photo-submit').addEventListener('click', handlePhotoSubmit);
+            $('song-submit').addEventListener('click', submitSong);
+            $('table-search').addEventListener('input', e => searchTable(e.target.value));
+            $('install-btn').addEventListener('click', async () => {
+                if (!installPrompt) return;
+                installPrompt.prompt();
+                await installPrompt.userChoice;
+                installPrompt = null; $('install-btn').style.display = 'none';
+            });
+
+            // Delegacja zdarzeń w galerii (bez inline onclick)
+            $('gallery-grid').addEventListener('click', e => {
+                const del = e.target.closest('[data-delete]');
+                if (del) { e.stopPropagation(); deleteMyPhoto(del.dataset.delete, del); return; }
+                const item = e.target.closest('.gallery-item');
+                if (item && item.dataset.url) window.open(item.dataset.url, '_blank', 'noopener');
+            });
+            $('gallery-grid').addEventListener('keydown', e => {
+                const item = e.target.closest('.gallery-item');
+                if (item && e.key === 'Enter' && item.dataset.url) window.open(item.dataset.url, '_blank', 'noopener');
+            });
+
+            loadGallery();
+            refreshQueuePill();
+            flushOutbox();
+        });
+
+        window.addEventListener('online', flushOutbox);
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') flushOutbox(); });
+        setInterval(flushOutbox, 30000);
+
+        /* ================= SERVICE WORKER ================= */
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            });
+            // Nowa wersja aplikacji → przeładuj, ale nie w trakcie wysyłania
+            const hadController = !!navigator.serviceWorker.controller;
+            let reloaded = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!hadController || reloaded) return;
+                if (busy) { toast('Dostępna nowa wersja – zostanie wczytana przy następnym otwarciu.'); return; }
+                reloaded = true; location.reload();
+            });
+        }
+    </script>
+</body>
+</html>

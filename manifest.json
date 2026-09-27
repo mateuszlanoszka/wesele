@@ -1,0 +1,17 @@
+{
+  "name": "Monika & Mateusz – Nasze Wesele",
+  "short_name": "Nasze Wesele",
+  "description": "Plan dnia, menu, stoliki i wspólna galeria zdjęć z wesela Moniki i Mateusza.",
+  "lang": "pl",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdfbf7",
+  "theme_color": "#164081",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
